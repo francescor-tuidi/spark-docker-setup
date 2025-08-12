@@ -31,7 +31,7 @@ services:
 
   spark-connect:
     build:
-      context: .
+      context: https://github.com/francescor-tuidi/spark-docker-setup/
       dockerfile: Dockerfile
     container_name: spark-connect
     environment:
