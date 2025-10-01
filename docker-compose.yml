@@ -58,7 +58,7 @@ services:
     ports:
       - "15002:15002"
     networks:
-      - spark-net
+      - spark-network
 
 networks:
   spark-network:
