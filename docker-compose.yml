@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   spark-master:
-    build: .
+    build: https://github.com/francescor-tuidi/spark-docker-setup.git#main
     container_name: spark-master
     hostname: spark-master
     ports:
