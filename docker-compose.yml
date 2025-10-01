@@ -1,33 +1,50 @@
+version: "3.9"
+
 services:
   spark-master:
-    image: bitnami/spark:3.5.1
+    build: .
     container_name: spark-master
-    environment:
-      - SPARK_MODE=master
-      - SPARK_RPC_AUTHENTICATION_ENABLED=no
-      - SPARK_RPC_ENCRYPTION_ENABLED=no
-      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
-      - SPARK_SSL_ENABLED=no
+    hostname: spark-master
     ports:
-      - "7077:7077"
-      - "8080:8080"
-    networks:
-      - spark-network
+      - "8080:8080" # UI Master
+      - "7077:7077" # Cluster Spark
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - PYSPARK_PYTHON=python3
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "bash",
+          "-lc",
+          "curl -fsS http://localhost:8080 >/dev/null || exit 1",
+        ]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    networks: [spark-network]
 
   spark-worker:
-    image: bitnami/spark:3.5.1
-    container_name: spark-worker
-    environment:
-      - SPARK_MODE=worker
-      - SPARK_MASTER_URL=spark://spark-master:7077
-      - SPARK_WORKER_MEMORY=2G
-      - SPARK_WORKER_CORES=2
+    image: apache/spark:3.5.1-python3
+    container_name: spark-worker-1
     depends_on:
       - spark-master
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+      - PYSPARK_PYTHON=python3
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2g
+    command:
+      [
+        "/opt/spark/bin/spark-class",
+        "org.apache.spark.deploy.worker.Worker",
+        "spark://spark-master:7077",
+        "--webui-port",
+        "8081",
+      ]
     ports:
-      - "8081:8081"
-    networks:
-      - spark-network
+      - "8081:8081" # UI Worker (useful for debugging)
+    networks: [spark-network]
 
   spark-connect:
     build:
@@ -41,7 +58,7 @@ services:
     ports:
       - "15002:15002"
     networks:
-      - spark-network
+      - spark-net
 
 networks:
   spark-network:
